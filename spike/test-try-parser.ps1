@@ -1,5 +1,7 @@
 ﻿cls
 
+. .\try-dcf-parser.ps1
+
 $Context = @{
     Person=@{
         FirstName = "Homer"
@@ -32,4 +34,6 @@ $context = @{
 }
 
 #(Get-MustacheTokens -Text $s)
-Invoke-ApplyTokens (Get-MustacheTokens -Text $s) | iex #| iex
+#Invoke-ApplyTokens (Get-MustacheTokens -Text $s) | iex #| iex
+
+Invoke-Template $Context $s

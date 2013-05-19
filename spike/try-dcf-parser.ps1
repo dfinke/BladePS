@@ -125,7 +125,7 @@ function Invoke-ApplyTokens {
         }
 
         {$_.TokenType -eq 'StartSection' } {
-            $outputString+='foreach(`$item in `$Context.stooges) {'
+            $outputString+='foreach(`$item in `$Context.' + $_.text + ') {'
         }
 
         {$_.TokenType -eq 'EndSection' } {            
@@ -136,4 +136,13 @@ function Invoke-ApplyTokens {
     }
         
     "@`"`r`n$outputString`r`n`"@"
+}
+
+function Invoke-Template {
+    param(
+        $Context,
+        $Template    
+    )
+
+    Invoke-ApplyTokens (Get-MustacheTokens -Text $Template) | Invoke-Expression | Invoke-Expression
 }
