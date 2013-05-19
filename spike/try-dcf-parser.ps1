@@ -32,7 +32,11 @@
     while($true) {        
         $s = Get-NextChar
         
-        if($s -eq $null) {break}
+        if($s -eq $null) {
+            $tokens += New-Token LiteralText $LiteralText
+            break
+        }
+
         Switch ($s) {
         
             '{' {
@@ -42,7 +46,7 @@
                     $inMustacheCount = 0
                 
                     if($LiteralText) {
-                        $tokens += new-token LiteralText $LiteralText
+                        $tokens += New-Token LiteralText $LiteralText
                     }
                     $LiteralText=""
                 }
@@ -85,9 +89,7 @@
                     }
 
                 } else {
-                    #if($_ -ne "`r" -and $_ -ne "`n" ){
-                        $LiteralText += $_
-                    #}
+                    $LiteralText += $_
                 }
             }
         }
@@ -98,14 +100,40 @@
     $tokens
 }
 
-cls
+function Invoke-ApplyTokens {
+    param($tokens)
 
-$str = @"
-Shown.
-{{#person}}
-Never shown!
-{{/person}}
-"@
+    $containsSection = $tokens | Where {$_.tokentype -match 'section'}
+    $outputString = $null    
+    
+    Switch ($tokens) {
+    
+        {$_.TokenType -eq 'LiteralText' } {
+            if($containsSection) {
+                $sectionText += @($_.text)
+            } else {
+                $outputString+=$_.text
+            }
+        } 
 
-#Get-MustacheTokens "C:\temp\test.txt" | ft -a
-Get-MustacheTokens -Text $str 
+        {$_.TokenType -eq 'Token' } {
+            if($containsSection) {
+                $sectionText += @('`$(`$item.{0})' -f $_.text)
+            } else {
+                $outputString+='$($context.{0})' -f $_.text
+            }
+        }
+
+        {$_.TokenType -eq 'StartSection' } {
+            $outputString+='foreach(`$item in `$Context.stooges) {'
+        }
+
+        {$_.TokenType -eq 'EndSection' } {            
+            $outputString += '"' + ($sectionText -join '') + '"'
+            $outputString += '}'
+            $sectionText =@()
+        }
+    }
+        
+    "@`"`r`n$outputString`r`n`"@"
+}
