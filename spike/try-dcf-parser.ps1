@@ -135,7 +135,10 @@ function Invoke-ApplyTokens {
         }
     }
         
-    "@`"`r`n$outputString`r`n`"@"
+    [PSCustomObject]@{
+        ResolvedTemplate = "@`"`r`n$outputString`r`n`"@"
+        ContainsSection = $containsSection.Count -ge 1
+    }
 }
 
 function Invoke-Template {
@@ -144,5 +147,11 @@ function Invoke-Template {
         $Template    
     )
 
-    Invoke-ApplyTokens (Get-MustacheTokens -Text $Template) | Invoke-Expression | Invoke-Expression
+    $result = Invoke-ApplyTokens (Get-MustacheTokens -Text $Template)
+    
+    if($result.ContainsSection) {
+        $result.ResolvedTemplate | Invoke-Expression | Invoke-Expression
+    } else {
+        $result.ResolvedTemplate | Invoke-Expression 
+    }
 }
