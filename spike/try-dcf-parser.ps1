@@ -106,38 +106,58 @@ function Invoke-ApplyTokens {
     $containsSection = $tokens | Where {$_.tokentype -match 'section'}
     $outputString = $null    
     $inSection = $false
-    
+    $literalText = @()
+
     Switch ($tokens) {
     
         {$_.TokenType -eq 'LiteralText' } {
-            if($containsSection) {
+            if($containsSection -and $inSection) {
                 $sectionText += @($_.text)
             } else {
-                $outputString+=$_.text
+                #$outputString+=$_.text
+                $literalText += @($_.text)
             }
         } 
 
         {$_.TokenType -eq 'Token' } {
-            if($containsSection) {
+            if(($containsSection.Count -ge 1) -and $inSection) {
                 $sectionText += @('`$(`$item.{0})' -f $_.text)
             } else {
-                $outputString+='$($context.{0})' -f $_.text
+                #$outputString+='`$(`$context.{0})' -f $_.text
+                $literalText += @('`$(`$context.{0})' -f $_.text)
             }
         }
 
-        {$_.TokenType -eq 'StartSection' } {
+        {$_.TokenType -eq 'StartSection' } {        
+        
+            if($literalText) {
+                $outputString+= '"' + ($literalText -join '') + '"' + "`r`n"
+                $literalText = @()
+            }
+
             $inSection = $true
             $outputString+='foreach(`$item in `$Context.' + $_.text + ') {'
         }
 
         {$_.TokenType -eq 'EndSection' } {            
+            
+            if($literalText) {
+                $outputString+= '"' + ($literalText -join '') + '"' + "`r`n"
+                $literalText = @()
+            }
+            
             $inSection = $false
             $outputString += '"' + ($sectionText -join '') + '"'
             $outputString += '}'
             $sectionText =@()
         }
     }
-        
+
+    if($literalText) {
+        $outputString+= '"' + ($literalText -join '') + '"' + "`r`n"
+        $literalText = @()
+    }
+      
     [PSCustomObject]@{
         ResolvedTemplate = "@`"`r`n$outputString`r`n`"@"
         ContainsSection = $containsSection.Count -ge 1
@@ -162,10 +182,6 @@ function Invoke-Template {
     if($AsResolved) {
         return $result.ResolvedTemplate
     }
-
-    if($result.ContainsSection) {
-        $result.ResolvedTemplate | Invoke-Expression | Invoke-Expression
-    } else {
-        $result.ResolvedTemplate | Invoke-Expression 
-    }
+    
+    $result.ResolvedTemplate | Invoke-Expression | Invoke-Expression
 }

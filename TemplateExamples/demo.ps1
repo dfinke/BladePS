@@ -1,13 +1,8 @@
 . ..\spike\try-dcf-parser.ps1 
 
 $t = @"
-
 <h1>{{header}}</h1>
-
-{{#items}}
-    {{name}}
-{{/items}}
-
+{{#items}}* {{name}}{{/items}}
 "@
 
 $c = @"
