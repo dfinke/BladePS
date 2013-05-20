@@ -1,4 +1,4 @@
-﻿function Get-MustacheTokens {
+﻿function Get-BladeTokens {
     param(        
         [string]$Path,
         [string]$Text
@@ -17,8 +17,8 @@
         
     $leftCurlyCount = 0
     $rightCurlyCount = 0
-    $inMustacheCount = 0
-    [bool]$inMustache=$false
+    $inBladeCount = 0
+    [bool]$inBlade=$false
     $tokens = @()
 
     function New-Token {
@@ -42,8 +42,8 @@
             '{' {
                 $leftCurlyCount  += 1
                 if($leftCurlyCount -eq 2) {
-                    $inMustache=$true
-                    $inMustacheCount = 0
+                    $inBlade=$true
+                    $inBladeCount = 0
                 
                     if($LiteralText) {
                         $tokens += New-Token LiteralText $LiteralText
@@ -56,34 +56,34 @@
                 $rightCurlyCount += 1
 
                 if($rightCurlyCount -eq 2) {
-                    $inMustache=$false
+                    $inBlade=$false
                     $leftCurlyCount = 0
                     $rightCurlyCount = 0
-                    $inMustacheCount = 0               
+                    $inBladeCount = 0               
                 
-                    $tokens += new-token $TokenType $MustacheToken.Trim()
-                    $MustacheToken=""
+                    $tokens += new-token $TokenType $BladeToken.Trim()
+                    $BladeToken=""
                 }
              }
             default {
-                if($inMustache) {
+                if($inBlade) {
                     $currentChar = $_
-                    $inMustacheCount += 1
+                    $inBladeCount += 1
 
-                    if($inMustacheCount -eq 1) {
+                    if($inBladeCount -eq 1) {
                         switch($currentChar) {
                             "#" {$TokenType="StartSection"}
                             "/" {$TokenType="EndSection"}
                             ">" {$TokenType="Include"}
                             default {
                                 $TokenType="Token"
-                                $MustacheToken+=$_
+                                $BladeToken+=$_
                             }
                         }
                     } else {
                         switch($currentChar) {
                             default {
-                                $MustacheToken+=$_
+                                $BladeToken+=$_
                             }
                         }
                     }
@@ -105,6 +105,7 @@ function Invoke-ApplyTokens {
 
     $containsSection = $tokens | Where {$_.tokentype -match 'section'}
     $outputString = $null    
+    $inSection = $false
     
     Switch ($tokens) {
     
@@ -125,10 +126,12 @@ function Invoke-ApplyTokens {
         }
 
         {$_.TokenType -eq 'StartSection' } {
+            $inSection = $true
             $outputString+='foreach(`$item in `$Context.' + $_.text + ') {'
         }
 
         {$_.TokenType -eq 'EndSection' } {            
+            $inSection = $false
             $outputString += '"' + ($sectionText -join '') + '"'
             $outputString += '}'
             $sectionText =@()
@@ -144,11 +147,22 @@ function Invoke-ApplyTokens {
 function Invoke-Template {
     param(
         $Context,
-        $Template    
+        $Template,
+        [Switch]$AsResolved,
+        [Switch]$AsTokens
     )
 
-    $result = Invoke-ApplyTokens (Get-MustacheTokens -Text $Template)
+    $tokens = Get-BladeTokens -Text $Template
+    if($AsTokens) {
+        return $tokens
+    }
+
+    $result = Invoke-ApplyTokens $tokens
     
+    if($AsResolved) {
+        return $result.ResolvedTemplate
+    }
+
     if($result.ContainsSection) {
         $result.ResolvedTemplate | Invoke-Expression | Invoke-Expression
     } else {

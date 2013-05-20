@@ -16,7 +16,7 @@ babu
 </name>
 "@
 
-#Invoke-ApplyTokens (Get-MustacheTokens -Text $s) |iex
+#Invoke-ApplyTokens (Get-BladeTokens -Text $s) |iex
 #return 
 
 $s = @"
@@ -33,7 +33,7 @@ $context = @{
     )
 }
 
-#(Get-MustacheTokens -Text $s)
+#(Get-BladeTokens -Text $s)
 #Invoke-ApplyTokens (Get-MustacheTokens -Text $s) | iex #| iex
 
 Invoke-Template $Context $s

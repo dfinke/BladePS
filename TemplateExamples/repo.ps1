@@ -1,4 +1,3 @@
-cls
 . ..\spike\try-dcf-parser.ps1 
 
 $template = @"

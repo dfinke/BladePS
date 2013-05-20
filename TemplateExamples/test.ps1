@@ -1,4 +1,4 @@
-. ..\BladePS.ps1
+. ..\spike\try-dcf-parser.ps1 
 
 $t = @'
 Hello {{name}},
