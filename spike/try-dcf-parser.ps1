@@ -23,6 +23,11 @@
 
     function New-Token {
         param($TokenType, $Text)
+
+        if($TokenType -eq "LiteralText") {
+            $Text = $Text -replace '"', '`$([char]34)'
+        }
+
         [PSCustomObject]@{
             TokenType=$TokenType
             Text=$Text
