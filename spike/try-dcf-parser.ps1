@@ -80,6 +80,7 @@
                             "#" {$TokenType="StartSection"}
                             "/" {$TokenType="EndSection"}
                             ">" {$TokenType="Include"}
+                            "!" {$TokenType="Comment"}
                             default {
                                 $TokenType="Token"
                                 $BladeToken+=$_
@@ -118,8 +119,7 @@ function Invoke-ApplyTokens {
         {$_.TokenType -eq 'LiteralText' } {
             if($containsSection -and $inSection) {
                 $sectionText += @($_.text)
-            } else {
-                #$outputString+=$_.text
+            } else {                
                 $literalText += @($_.text)
             }
         } 
@@ -128,7 +128,6 @@ function Invoke-ApplyTokens {
             if(($containsSection.Count -ge 1) -and $inSection) {
                 $sectionText += @('`$(`$item.{0})' -f $_.text)
             } else {
-                #$outputString+='`$(`$context.{0})' -f $_.text
                 $literalText += @('`$(`$context.{0})' -f $_.text)
             }
         }
@@ -141,6 +140,7 @@ function Invoke-ApplyTokens {
             }
 
             $inSection = $true
+            #Write-Host -ForegroundColor Yellow "decision time" 
             $outputString+='foreach(`$item in `$Context.' + $_.text + ') {'
         }
 
