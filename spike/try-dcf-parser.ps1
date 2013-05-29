@@ -134,13 +134,16 @@ function Invoke-ApplyTokens {
 
         {$_.TokenType -eq 'StartSection' } {        
         
+            Write-Host -ForegroundColor Yellow "The Decider" 
+
             if($literalText) {
                 $outputString+= '"' + ($literalText -join '') + '"' + "`r`n"
                 $literalText = @()
             }
 
             $inSection = $true
-            #Write-Host -ForegroundColor Yellow "decision time" 
+
+            # If the value of a section variable is a function
             $outputString+='foreach(`$item in `$Context.' + $_.text + ') {'
         }
 
