@@ -4,6 +4,8 @@
         [string]$Text
     )
 
+    if($Text.Length -eq 0) { return }
+
     if($Path) { $sr = New-Object System.IO.StreamReader($Path) }
     if($Text) { $sr = New-Object System.IO.StringReader($Text) }
     
@@ -184,6 +186,9 @@ function Invoke-Template {
         [Switch]$AsTokens
     )
 
+    #if(!$Context -or $Context.KeysCount -eq 0) { return }
+
+
     $tokens = Get-BladeTokens -Text $Template
     if($AsTokens) {
         return $tokens
@@ -195,5 +200,5 @@ function Invoke-Template {
         return $result.ResolvedTemplate
     }
     
-    $result.ResolvedTemplate | Invoke-Expression | Invoke-Expression
+    $result.ResolvedTemplate | Invoke-Expression | Invoke-Expression -ErrorAction SilentlyContinue
 }
