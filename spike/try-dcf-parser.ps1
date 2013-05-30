@@ -126,7 +126,13 @@ function Invoke-ApplyTokens {
 
         {$_.TokenType -eq 'Token' } {
             if(($containsSection.Count -ge 1) -and $inSection) {
-                $sectionText += @('`$(`$item.{0})' -f $_.text)
+                            
+                if($context.($_.Text) -is [ScriptBlock]) {
+                    $sectionText += @('`$(& `$context.' + $_.Text + ' `$item)')
+                } else {
+                    $sectionText += @('`$(`$item.{0})' -f $_.text)
+                }
+                
             } else {
                 $literalText += @('`$(`$context.{0})' -f $_.text)
             }
@@ -134,8 +140,6 @@ function Invoke-ApplyTokens {
 
         {$_.TokenType -eq 'StartSection' } {        
         
-            Write-Host -ForegroundColor Yellow "The Decider" 
-
             if($literalText) {
                 $outputString+= '"' + ($literalText -join '') + '"' + "`r`n"
                 $literalText = @()

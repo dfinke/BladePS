@@ -10,25 +10,21 @@ $context = @{
     @{ "firstName"="Ringo";"lastName"="Starr" }
   )
   
-  "name"= {$this.lastName + ", " + $this.firstName}
+  "name"= {param($target) "[$((Get-Date).ToString('d'))] {0}, {1}" -f $target.lastName, $target.firstName}
 }
-
-
 
 $t = @"
-{{#beatles}}
-* {{name}}
-{{/beatles}}
+{{#beatles}}* {{name}}{{/beatles}}
 "@
 
-#Invoke-Template $context $t
-
-if($context.name -is [ScriptBlock]) {
-    foreach($item in $context.beatles) { 
-        if($item -is [hashtable]) {
-            $item = [PSCustomObject]$item 
-        } 
-
-        ($item | Add-Member -MemberType ScriptProperty -PassThru -Name Result -Value $context.name).Result
-    }
-}
+Invoke-Template $context $t
+#return
+#if($context.name -is [ScriptBlock]) {
+#    foreach($item in $context.beatles) {
+#        if($item -is [hashtable]) {
+#            $item = [PSCustomObject]$item 
+#        }
+#                
+#        & $context.name $item
+#    }
+#}
